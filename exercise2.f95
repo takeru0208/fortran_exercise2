@@ -1,107 +1,70 @@
 program exercise2
     implicit none
 
+    integer(4), parameter ::member=50_4, subject=5_4
     integer :: i, j
-    integer(8) :: data(5, 50), outdata(6, 50)
-    !ファイルの読み込み
+    integer(8) :: data(subject, member)
+    double precision :: mean(subject), st_div(subject)
+    
+    !データの入力
     read(*,*) data
-    !６列目に合計点を追加した
-    do i = 1, 50  
-        do j = 1, 5
-        outdata(j,i) = data(j,i)
-        end do
-        outdata(6,i) = sum(data(:,i))
+
+    ! 平均 標準偏差を計算
+    call calc_mean(subject, member, data, mean)
+    call calc_st_div(subject, member, data, mean, st_div)
+
+    ! 標準出力
+    do i=1, subject
+        write(*,*) 'subject', i 
+        write(*,*) '    mean:              ', mean(i)
+        write(*,*) '    standard division: ', st_div(i)
     end do 
 
+    !ファイルへの出力
 
-    open(17, file='ex1.dat', status='replace') 
-    do i = 1, 50
-        do j = 1, 6
-        write(17, fmt='(i3)', advance='no') outdata(j, i)
-        if(j >=6) then
-            exit
-        end if
-        write(17, fmt='(a)', advance='no') ', '
-        end do
-        write(17, *) ''
-    end do
+    open(17, file='ex2.dat', status='replace') 
+    do i=1, subject
+        write(17,*) 'subject', i 
+        write(17,*) '    mean:              ', mean(i)
+        write(17,*) '    standard division: ', st_div(i)
+    end do 
     close(17)
-    call heapsort(50, outdata)
-
-    open(17, file='sorted_ex1.dat', status='replace') 
-    do i = 1, 50
-        do j = 1, 6
-        write(17, fmt='(i3)', advance='no') outdata(j, i)
-        if(j >=6) then
-            exit
-        end if
-        write(17, fmt='(a)', advance='no') ', '
-        end do
-        write(17, *) ''
-    end do
-    close(17)
+    
     stop
 
 
-! ヒープソートを行う
+
 contains
-    subroutine heapsort(n,array)
+    ! 平均の計算
+    subroutine calc_mean(subject, member, data, mean)
         implicit none
-        integer,intent(in) :: n
-        integer(8),intent(inout) :: array(6, n)
+        integer,intent(in) :: subject, member
+        integer(8),intent(in) :: data(subject, member)
+        double precision, intent(inout) :: mean(subject)
 
-        integer ::i,k,j,l, p
-        integer(8) :: t(6)
-
-        if(n.le.0)then
-        write(6,*)"Error, at heapsort"; stop
-        endif
-        if(n.eq.1)return
-
-        l=n/2+1
-        k=n
-        do while(k.ne.1)
-        if(l.gt.1)then
-            l=l-1
-            do p = 1, 6 
-                t(p)=array(p, L)
-            end do
-        else
-            do p = 1, 6
-            t(p)=array(p, k)
-            array(p, k)=array(p, 1)
-            end do 
-            
-            k=k-1
-            if(k.eq.1) then
-            do p = 1, 6
-                array(p, 1)=t(p)
-            end do
-            exit
-            endif
-        end if
-        i=l
-        j=l+l
-        do while(j.le.k)
-            if(j.lt.k)then
-                if(array(6, j).lt.array(6, j+1))j=j+1
-            end if
-            if (t(6).lt.array(6, j))then
-                do p= 1, 6
-                array(p, i)=array(p, j)
-                end do
-                i=j
-                j=j+j
-            else
-                j=k+1
-            end if
-        end do
-        do p = 1, 6
-            array(p, i)=t(p)
-        end do
-        enddo
+        integer :: i
+        do i=1, subject
+            mean(i) = real(sum(data(i,:)))/real(member)
+        end do 
 
         return
-    end subroutine heapsort
+    end subroutine calc_mean
+
+
+    !標準偏差の計算
+    subroutine calc_st_div(subject, member, data, mean, st_div)
+        implicit none
+        integer,intent(in) :: subject, member
+        integer(8),intent(in) :: data(subject, member)
+        double precision, intent(in) :: mean(subject)
+        double precision, intent(inout) :: st_div(subject)
+
+        integer :: i
+        do i=1, subject
+            st_div(i) = sqrt( real( sum((data(i, :) - mean(i))**2) ) / real(member))
+        end do 
+
+        return
+    end subroutine calc_st_div
 
 end program exercise2
